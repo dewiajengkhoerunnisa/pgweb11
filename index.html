@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PGWEB11 - WebGIS Kabupaten Sleman</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #fff0f6;
+        }
+
+        h2 {
+            text-align: center;
+            background-color: #f8d7e8;
+            color: #d63384;
+            padding: 18px;
+            margin: 0;
+        }
+
+        #map {
+            height: 88vh;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>WebGIS Kabupaten Sleman</h2>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="lib/L.Geoserver.js"></script>
+
+    <script>
+        // Membuat peta
+        var map = L.map("map").setView([-7.677567, 110.406899], 11);
+
+        // Basemap OpenStreetMap
+        var osm = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        });
+        osm.addTo(map);
+
+        // Basemap Esri World Imagery (Satelit)
+        var imagery = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+            maxZoom: 19,
+            attribution: 'Tiles &copy; Esri'
+        });
+
+        // Layer area batas administrasi desa
+        var area = L.Geoserver.wms("http://localhost:8080/geoserver/wms", {
+            layers: "pgweb11:ADMINISTRASIDESA_AR_25K",
+            transparent: true,
+            format: "image/png"
+        });
+
+        // Layer garis jaringan jalan
+        var garis = L.Geoserver.wms("http://localhost:8080/geoserver/wms", {
+            layers: "pgweb11:jalan",
+            transparent: true,
+            format: "image/png"
+        });
+
+        // Layer titik rumah sakit
+        var titik = L.Geoserver.wms("http://localhost:8080/geoserver/wms", {
+            layers: "pgweb11:RUMAHSAKIT_PT_25K",
+            transparent: true,
+            format: "image/png"
+        });
+
+        // Menampilkan layer pada peta
+        area.addTo(map);
+        garis.addTo(map);
+        titik.addTo(map);
+
+        // Menampilkan legenda semua layer di pojok kiri bawah (bisa di-scroll)
+        var layerLegend = L.Geoserver.legend("http://localhost:8080/geoserver/wms", {
+            layers: [
+                { name: "pgweb11:RUMAHSAKIT_PT_25K", title: "Lokasi Rumah Sakit" },
+                { name: "pgweb11:jalan", title: "Jaringan Jalan" },
+                { name: "pgweb11:ADMINISTRASIDESA_AR_25K", title: "Batas Administrasi Desa" }
+            ]
+        });
+        layerLegend.addTo(map);
+
+        // Mengatur pilihan basemap dan overlay layer
+        var baseMaps = {
+            "OpenStreetMap": osm,
+            "Satelit (Imagery)": imagery
+        };
+
+        var overlayMaps = {
+            "Batas Administrasi Desa": area,
+            "Jaringan Jalan": garis,
+            "Lokasi Rumah Sakit": titik
+        };
+
+        L.control.layers(baseMaps, overlayMaps).addTo(map);
+    </script>
+
+</body>
+
+</html>
